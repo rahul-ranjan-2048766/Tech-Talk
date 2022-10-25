@@ -1,0 +1,74 @@
+apiVersion: apps/v1 
+kind: Deployment 
+metadata:
+  name: jaeger 
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate 
+  selector:
+    matchLabels:
+      app: jaeger
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: jaeger 
+    spec:
+      containers:
+        - image: jaegertracing/all-in-one
+          name: jaeger 
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 6831
+              protocol: UDP 
+              name: port-1 
+            - containerPort: 6832
+              protocol: UDP 
+              name: port-2
+            - containerPort: 14250
+              protocol: TCP
+              name: port-3
+            - containerPort: 14268
+              protocol: TCP
+              name: port-4
+            - containerPort: 16686
+              protocol: TCP 
+              name: port-5
+            - containerPort: 5778
+              protocol: TCP 
+              name: port-6
+---
+apiVersion: v1 
+kind: Service 
+metadata:
+  name: jaeger-udp
+spec:
+  ports:
+    - port: 6831
+      targetPort: 6831
+      protocol: UDP
+      name: port-1
+    - port: 6832
+      targetPort: 6832
+      protocol: UDP
+      name: port-2
+  type: LoadBalancer
+  selector:
+    app: jaeger
+---
+apiVersion: v1 
+kind: Service 
+metadata:
+  name: jaeger-tcp 
+spec:
+  ports:
+    - port: 16686
+      targetPort: 16686
+      protocol: TCP
+      name: port-5
+  type: LoadBalancer
+  selector:
+    app: jaeger

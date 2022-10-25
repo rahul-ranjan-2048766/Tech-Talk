@@ -1,0 +1,15 @@
+Open this folder in Command Prompt
+Type: kubectl apply -f .
+
+This will apply all the Kubernetes(K8s) YAML 
+files present in the current directory
+
+Then you need to check the URLs:
+
+Jaeger: http://localhost:16686/
+
+Zipkin: http://localhost:9411/
+
+Elasticsearch: http://localhost:9200/
+
+Kibana: http://localhost:5601/
