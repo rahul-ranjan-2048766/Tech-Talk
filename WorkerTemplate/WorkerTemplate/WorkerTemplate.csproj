@@ -15,5 +15,10 @@
     <PackageReference Include="OpenTelemetry.Exporter.Jaeger" Version="1.4.0-beta.1" />
     <PackageReference Include="OpenTelemetry.Exporter.Zipkin" Version="1.4.0-beta.1" />
     <PackageReference Include="prometheus-net" Version="7.0.0-pre-000305-75cc817" />
+    <PackageReference Include="Serilog.AspNetCore" Version="6.1.0-dev-00285" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="2.2.1-dev-00787" />
+    <PackageReference Include="Serilog.Exceptions" Version="8.4.0" />
+    <PackageReference Include="Serilog.Sinks.Debug" Version="2.0.0" />
+    <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="9.0.0-beta7" />
   </ItemGroup>
 </Project>

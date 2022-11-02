@@ -4,6 +4,10 @@ using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
 using Prometheus;
 using OpenTelemetry.Metrics;
+using Serilog;
+using Serilog.Exceptions;
+using Serilog.Sinks.Elasticsearch;
+using System.Reflection;
 
 
 // Adding Prometheus - Metrics Calculation
@@ -29,9 +33,39 @@ string JaegerPort = "";
 string ZipkinHost = "";
 string ZipkinPort = "";
 
+// Adding OpenTelemetry - Exporting data to ELK
+ConfigureLogs();
+
+void ConfigureLogs()
+{
+    var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+    var configuration = new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .Build();
+
+    Log.Logger = new LoggerConfiguration()
+        .Enrich.FromLogContext()
+        .Enrich.WithExceptionDetails()
+        .WriteTo.Debug()
+        .WriteTo.Console()
+        .WriteTo.Elasticsearch(ConfigureELS(configuration, environment))
+        .CreateLogger();
+}
+
+ElasticsearchSinkOptions ConfigureELS(IConfigurationRoot configuration, string? environment)
+{
+    return new ElasticsearchSinkOptions(new Uri($"http://localhost:9200"))
+    {
+        AutoRegisterTemplate = true,
+        IndexFormat = $"{Assembly.GetExecutingAssembly().GetName().Name?.ToLower()}-" +
+        $"{environment?.ToLower().Replace(".", "-")}-{DateTime.UtcNow:yyyy-MM}"
+    };
+}
+
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>
-    {
+    { 
         services.AddHostedService<Worker>();
         serviceName = hostContext.Configuration["ServiceName"];
         serviceVersion = hostContext.Configuration["ServiceVersion"];
@@ -40,6 +74,9 @@ IHost host = Host.CreateDefaultBuilder(args)
         ZipkinHost = hostContext.Configuration["ZipkinHost"];
         ZipkinPort = hostContext.Configuration["ZipkinPort"];
     })
+    
+    .UseSerilog()
+    
     .Build();
 
 
