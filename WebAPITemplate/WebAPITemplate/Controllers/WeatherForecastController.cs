@@ -9,7 +9,7 @@ namespace WebAPITemplate.Controllers
     {
         private static readonly string[] Summaries = new[]
         {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+        "USA", "India", "Russia", "The Great Britain"
     };
 
         private readonly ILogger<WeatherForecastController> _logger;
@@ -31,11 +31,14 @@ namespace WebAPITemplate.Controllers
                 span.AddEvent("The list of forecasts is being returned to the Swagger......");
             }
 
+            _logger.LogInformation("Returning the weather forecasts....");
+            _logger.LogWarning("Returning the list to the UI......");
+
             return Enumerable.Range(1, 6).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+                TemperatureC = Random.Shared.Next(-20, 60),
+                Place = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
         }

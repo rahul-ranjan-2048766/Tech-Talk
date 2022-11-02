@@ -8,7 +8,7 @@ using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Adding OpenTelemetry using ELK
+// Adding OpenTelemetry - Exporting data to ELK
 ConfigureLogs();
 
 void ConfigureLogs()
@@ -40,19 +40,19 @@ ElasticsearchSinkOptions ConfigureELS(IConfigurationRoot configuration, string? 
 
 builder.Host.UseSerilog();
 
-// Add OpenTelemetry
+// Add OpenTelemetry (Jaeger + Zipkin)
 builder.Services.AddOpenTelemetryTracing(x =>
 {
     x.SetResourceBuilder(ResourceBuilder.CreateDefault()
-        .AddService("WebAPITemplate"));
+        .AddService("WebAPITemplate"));                    // creates resources: key-value pairs which describe your service
 
     x.AddSource("TraceSource");
     
-    x.AddAspNetCoreInstrumentation(sam => sam.Filter = httpContext => 
+    x.AddAspNetCoreInstrumentation(sam => sam.Filter = httpContext =>  // AspNetCore instrumentation library tracks the inbound
         !httpContext.Request.Path.Value?
-        .Contains("/_framework/aspnetcore-browser-refresh.js") ?? true);
-    
-    x.AddHttpClientInstrumentation(sam => sam.Enrich = 
+        .Contains("/_framework/aspnetcore-browser-refresh.js") ?? true); // ASP.NET Core request and sends traces to a collector.
+
+    x.AddHttpClientInstrumentation(sam => sam.Enrich =   // collects metrics and traces about outgoing HTTP requests.
     (activity, eventName, rawObject) =>
     {
         if (eventName == "OnStartActivity" 
@@ -61,25 +61,26 @@ builder.Services.AddOpenTelemetryTracing(x =>
             activity.SetTag("WebAPITemplate", "This is a microservice.");
     });
     
-    x.AddEntityFrameworkCoreInstrumentation(sam =>
+    x.AddEntityFrameworkCoreInstrumentation(sam =>  // collects metrics and traces about requests that ask 
     {
-        sam.SetDbStatementForStoredProcedure = true;
+        sam.SetDbStatementForStoredProcedure = true;  // for database statements and procedures to be executed
         sam.SetDbStatementForText = true;
     });
     
-    x.AddConsoleExporter();
+    x.AddConsoleExporter();  // exports metrics, logs and traces to console
     
-    x.AddJaegerExporter(sam =>
+    x.AddJaegerExporter(sam =>  // exports metrics, logs and traces to Jaeger
     {
         sam.AgentHost = "localhost";
         sam.AgentPort = 6831;
     });
     
-    x.AddZipkinExporter(sam =>
+    x.AddZipkinExporter(sam =>  // exports metrics, logs and traces to Zipkin
     {
         sam.Endpoint = new Uri($"http://localhost:9411/api/v2/spans");
     });
 });
+
 
 // Add services to the container.
 
@@ -103,9 +104,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapMetrics();
+app.MapMetrics();  // For Prometheus
 
-app.UseHttpMetrics();
+app.UseHttpMetrics();  // For Prometheus
 
 app.Run();
 
